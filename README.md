@@ -22,3 +22,7 @@ An event-driven backend microservice for asynchronous media processing.
 - Virtual environment configured
 - Requirements file created
 - Git ignore configured
+- AWS S3 bucket configured
+- Boto3 S3 client configured
+- S3 file upload and download implemented
+- Automated unit tests added for S3 operations
