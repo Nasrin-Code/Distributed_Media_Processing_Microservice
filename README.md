@@ -26,3 +26,6 @@ An event-driven backend microservice for asynchronous media processing.
 - Boto3 S3 client configured
 - S3 file upload and download implemented
 - Automated unit tests added for S3 operations
+- Pydantic job request model created
+- REST API endpoint created to accept media-processing jobs
+- POST /jobs endpoint tested successfully
