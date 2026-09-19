@@ -1,10 +1,52 @@
+from unittest.mock import patch
+
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)
+
 
 def test_home():
     response = client.get("/")
 
     assert response.status_code == 200
-    assert response.json() == {"message": "Distributed Media Processing Microservice"}
+    assert response.json() == {
+        "message": "Distributed Media Processing Microservice"
+    }
+
+
+def test_create_job():
+    response = client.post(
+        "/jobs",
+        json={
+            "filename": "video.mp4",
+            "operation": "resize",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "filename": "video.mp4",
+        "operation": "resize",
+    }
+
+
+@patch("app.main.generate_upload_url")
+def test_create_upload_url(mock_generate_upload_url):
+    mock_generate_upload_url.return_value = "https://example.com/upload"
+
+    response = client.post(
+        "/upload-url",
+        json={"filename": "video.mp4"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "upload_url": "https://example.com/upload",
+        "object_name": "uploads/video.mp4",
+    }
+
+    mock_generate_upload_url.assert_called_once_with(
+        "uploads/video.mp4"
+    )
