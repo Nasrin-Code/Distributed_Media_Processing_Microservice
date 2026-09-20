@@ -26,10 +26,12 @@ def test_create_job():
     )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "filename": "video.mp4",
-        "operation": "resize",
-    }
+    data = response.json()
+    
+    assert data["filename"] == "video.mp4"
+    assert data["operation"] == "resize"
+    assert data["status"] == "pending"
+    assert "job_id" in data
 
 
 @patch("app.main.generate_upload_url")
