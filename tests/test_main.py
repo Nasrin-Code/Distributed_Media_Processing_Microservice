@@ -33,6 +33,11 @@ def test_create_job():
     assert data["status"] == "pending"
     assert "job_id" in data
 
+def test_get_missing_job():
+    response = client.get("/jobs/job-that-does-not-exist")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Job not found"}
 
 @patch("app.main.generate_upload_url")
 def test_create_upload_url(mock_generate_upload_url):

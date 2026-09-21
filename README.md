@@ -29,3 +29,10 @@ An event-driven backend microservice for asynchronous media processing.
 - Pydantic job request model created
 - REST API endpoint created to accept media-processing jobs
 - POST /jobs endpoint tested successfully
+- POST /jobs endpoint tested successfully
+- Redis caching layer configured for job status tracking
+- Job status initialized as pending when a processing job is created
+- GET /jobs/{job_id} endpoint created to retrieve job status
+- 404 response implemented for unknown job IDs
+- Redis job-status tests added
+- Full test suite passing
