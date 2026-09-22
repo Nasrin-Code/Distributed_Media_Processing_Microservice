@@ -4,3 +4,4 @@ pytest
 httpx
 boto3
 redis
+celery
