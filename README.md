@@ -1,4 +1,4 @@
-# Distributed Media Processing Microservice
+﻿# Distributed Media Processing Microservice
 
 An event-driven backend microservice for asynchronous media processing.
 
@@ -16,7 +16,7 @@ An event-driven backend microservice for asynchronous media processing.
 
 ## Current Progress
 
-### Week 1 — API Scaffolding & Cloud Storage
+### Week 1 â€” API Scaffolding & Cloud Storage
 - FastAPI project structure created
 - Basic FastAPI application created
 - Virtual environment configured
@@ -36,9 +36,8 @@ An event-driven backend microservice for asynchronous media processing.
 - Redis job-status tests added
 - Full test suite passing
 
-## Week 2 — Message Broker & Celery Workers
+## Week 2 Message Broker & Celery Workers
 
-### Day 1–3
 - RabbitMQ deployed and configured using Docker
 - RabbitMQ Management UI configured
 - Celery integrated into the FastAPI application
@@ -47,3 +46,11 @@ An event-driven backend microservice for asynchronous media processing.
 - Celery dependency added to `requirements.txt`
 - Celery and RabbitMQ configuration verified successfully
 - Existing test suite passing: 9 tests passed
+- Created initial Celery worker task in `app/tasks.py`
+- Registered `process_job` using the Celery task decorator
+- Implemented simulated job receiving and acknowledgement
+- Verified asynchronous task submission using `process_job.delay()`
+- Verified RabbitMQ successfully delivers jobs to the Celery worker
+- Verified Celery worker receives and executes `process_job`
+- Verified successful job acknowledgement
+- Full test suite passing: 9 tests passed
