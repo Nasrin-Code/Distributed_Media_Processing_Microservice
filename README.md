@@ -53,4 +53,10 @@ An event-driven backend microservice for asynchronous media processing.
 - Verified RabbitMQ successfully delivers jobs to the Celery worker
 - Verified Celery worker receives and executes `process_job`
 - Verified successful job acknowledgement
+- Implemented robust error handling for Celery worker tasks
+- Added specific handling for network timeout errors
+- Implemented Celery task retry mechanism using `self.retry()`
+- Configured a 5-second delay before retrying timed-out tasks
+- Verified timeout detection and automatic task retry
+- Verified successful task execution after retry
 - Full test suite passing: 9 tests passed
