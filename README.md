@@ -60,3 +60,11 @@ An event-driven backend microservice for asynchronous media processing.
 - Verified timeout detection and automatic task retry
 - Verified successful task execution after retry
 - Full test suite passing: 9 tests passed
+
+## Week 3 — Core Media Processing Logic
+
+- Installed Pillow for image processing
+- Created image processing service
+- Implemented image cropping using Pillow
+- Added automated tests for image cropping
+- Verified full test suite: 10 tests passed
