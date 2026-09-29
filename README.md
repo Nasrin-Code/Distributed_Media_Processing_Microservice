@@ -68,3 +68,6 @@ An event-driven backend microservice for asynchronous media processing.
 - Implemented image cropping using Pillow
 - Added automated tests for image cropping
 - Verified full test suite: 10 tests passed
+- Implemented image resizing using Pillow
+- Added automated tests for image resizing
+- Verified full test suite: 11 tests passed
