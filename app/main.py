@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException
 from app.models.job import JobRequest, UploadURLRequest
 from app.services.s3_service import generate_upload_url
 from app.services.redis_service import get_job_status, set_job_status
+from app.tasks import process_job
 
 app = FastAPI()
 
@@ -19,6 +20,8 @@ def create_job(request: JobRequest):
     job_id = str(uuid.uuid4())
 
     set_job_status(job_id, "pending")
+
+    process_job.delay(job_id, request.filename, request.operation)
 
     return {
         "job_id": job_id,
