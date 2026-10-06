@@ -3,6 +3,8 @@ from pathlib import Path
 from app.celery_app import celery_app
 from app.services.redis_service import set_job_status
 from app.services.video_service import transcode_video, extract_thumbnail
+from app.metrics import update_worker_cpu
+from app.services.redis_service import set_worker_cpu_usage
 
 
 @celery_app.task(bind=True)
@@ -10,6 +12,9 @@ def process_job(self, job_id: str, filename: str, operation: str):
     try:
         print(f"Received job: {job_id}")
         print(f"Processing {filename} with operation: {operation}")
+
+        cpu_usage = update_worker_cpu()
+        set_worker_cpu_usage(cpu_usage)
 
         set_job_status(job_id, "processing")
 

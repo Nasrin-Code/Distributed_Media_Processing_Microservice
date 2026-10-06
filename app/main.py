@@ -4,8 +4,12 @@ from fastapi import FastAPI, HTTPException
 
 from app.models.job import JobRequest, UploadURLRequest
 from app.services.s3_service import generate_upload_url
-from app.services.redis_service import get_job_status, set_job_status
+from app.services.redis_service import get_job_status, set_job_status, get_worker_cpu_usage
+from app.metrics import worker_cpu_usage, update_queue_length
 from app.tasks import process_job
+
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
 
 app = FastAPI()
 
@@ -53,3 +57,9 @@ def create_upload_url(request: UploadURLRequest):
         "upload_url": upload_url,
         "object_name": object_name,
     }
+
+@app.get("/metrics")
+def metrics():
+    update_queue_length()
+    worker_cpu_usage.set(get_worker_cpu_usage())
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
