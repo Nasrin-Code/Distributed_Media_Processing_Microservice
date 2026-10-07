@@ -2,226 +2,565 @@
 
 ## 2nd Month Internship Project — Mid-Review Report
 
-**Organization:** Zaalima Development Pvt. Ltd.
-**Project:** Distributed Media Processing Microservice
-**Developer:** Nasrin A
-**Programming Language:** Python
-**Framework:** FastAPI
-**Current Progress:** Day 17 — Pillow Image Processing
+**Organization:** Zaalima Development Pvt. Ltd.  
+**Project:** Distributed Media Processing Microservice  
+**Developer:** Nasrin A  
+**Programming Language:** Python  
+**Framework:** FastAPI  
+**Current Progress:** Week 4 — Metrics, Deployment Documentation, Load Testing and Memory Analysis
 
 ---
 
 ## 1. Project Overview
 
-The Distributed Media Processing Microservice is a Python-based backend project designed to provide APIs and supporting services for media processing workflows.
+The Distributed Media Processing Microservice is a Python-based backend system designed to process media files through distributed background jobs.
 
-The project uses FastAPI to expose API endpoints, Amazon S3 integration for upload handling, Redis for job-status storage, and Celery as the planned background task-processing component. Pillow is used to implement image-processing operations.
+The project uses FastAPI to expose REST API endpoints, Amazon S3 for presigned upload URLs, Redis for job-status storage, Celery for asynchronous background processing, RabbitMQ as the message broker, FFmpeg for video processing, Pillow for image processing, and Prometheus-compatible metrics for monitoring.
 
-The project is being developed incrementally, with an emphasis on modular code organization, automated testing, and integration of backend services.
+The application is containerized using Docker Compose and is organized into separate API, worker, Redis, and RabbitMQ services.
+
+The project is developed incrementally with modular service components, automated testing, background task processing, monitoring, and deployment documentation.
+
+---
 
 ## 2. Project Objectives
 
-* Develop REST API endpoints using FastAPI.
-* Implement media-processing operations using Python.
-* Integrate Amazon S3 presigned URLs for file uploads.
-* Use Redis to store and retrieve processing job statuses.
-* Prepare background processing with Celery.
-* Organize the application into reusable service modules.
-* Write automated tests to verify application functionality.
-* Build toward a distributed media-processing workflow.
+- Develop REST API endpoints using FastAPI.
+- Implement image and video media-processing operations.
+- Integrate Amazon S3 presigned URLs for media uploads.
+- Use Redis to track processing job statuses.
+- Use Celery for asynchronous background processing.
+- Use RabbitMQ as the Celery message broker.
+- Implement FFmpeg-based video processing.
+- Implement Pillow-based image processing.
+- Add Prometheus-compatible monitoring metrics.
+- Containerize the application using Docker Compose.
+- Write automated tests using Pytest.
+- Perform load testing and memory-usage analysis.
+- Build a distributed media-processing workflow.
+
+---
 
 ## 3. Technology Stack
 
-| Technology        | Purpose                                   |
-| ----------------- | ----------------------------------------- |
-| Python            | Core programming language                 |
-| FastAPI           | Backend API framework                     |
-| Uvicorn           | ASGI application server                   |
-| Pydantic          | Request and data validation               |
-| Pillow            | Image cropping, resizing, and compression |
-| Amazon S3 / Boto3 | Object storage and upload URL integration |
-| Redis             | Job-status storage                        |
-| Celery            | Background task processing                |
-| Pytest            | Automated testing                         |
-| HTTPX             | HTTP testing support                      |
-| Docker            | Running supporting services locally       |
-| Git and GitHub    | Version control and source-code hosting   |
+| Technology | Purpose |
+|---|---|
+| Python | Core programming language |
+| FastAPI | Backend REST API framework |
+| Uvicorn | ASGI application server |
+| Pydantic | Request validation and data models |
+| Pillow | Image processing |
+| FFmpeg | Video thumbnail extraction and transcoding |
+| Amazon S3 / Boto3 | Object storage and presigned upload URLs |
+| Redis | Job-status and worker metric storage |
+| Celery | Asynchronous background task processing |
+| RabbitMQ | Message broker for Celery |
+| Prometheus Client | Application metrics |
+| psutil | Worker CPU monitoring |
+| Pytest | Automated testing |
+| HTTPX | API testing support |
+| Docker | Containerization |
+| Docker Compose | Multi-service local deployment |
+| Git and GitHub | Version control and source-code hosting |
 
-## 4. Project Structure
+---
+
+## 4. Project Architecture
+
+The application follows a distributed service architecture:
+
+```text
+                         Client
+                           |
+                           v
+                    +-------------+
+                    |   FastAPI   |
+                    |     API     |
+                    +-------------+
+                      |    |    |
+             +--------+    |    +--------+
+             |             |             |
+             v             v             v
+          Redis        RabbitMQ        Amazon S3
+       Job Status      Message Broker   File Storage
+                          |
+                          v
+                    +-------------+
+                    |   Celery    |
+                    |   Worker     |
+                    +-------------+
+                          |
+                 +--------+--------+
+                 |                 |
+                 v                 v
+              FFmpeg            Pillow
+           Video Processing   Image Processing
+```
+
+### Docker Services
+
+The Docker Compose environment contains four services:
+
+- **API** — FastAPI application.
+- **Worker** — Celery background worker.
+- **RabbitMQ** — Message broker.
+- **Redis** — Job-status and metric storage.
+
+---
+
+## 5. Project Structure
 
 ```text
 Distributed_Media_Processing_Microservice/
 │
 ├── app/
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── job.py
+│   │
 │   ├── services/
 │   │   ├── image_service.py
 │   │   ├── redis_service.py
-│   │   └── s3_service.py
+│   │   ├── s3_service.py
+│   │   └── video_service.py
 │   │
-│   └── main.py
+│   ├── __init__.py
+│   ├── celery_app.py
+│   ├── main.py
+│   ├── metrics.py
+│   └── tasks.py
 │
 ├── tests/
 │   ├── test_image_service.py
 │   ├── test_main.py
 │   ├── test_redis_service.py
-│   └── test_s3_service.py
+│   ├── test_s3_service.py
+│   └── test_video_service.py
 │
+├── Dockerfile
+├── docker-compose.yml
 ├── requirements.txt
 ├── pyproject.toml
 └── README.md
 ```
 
-*The structure above represents the known project files; retain any additional files and folders already present in the repository.*
+---
 
-## 5. Implemented Components
+## 6. Implemented Components
 
-### 5.1 FastAPI Application
+### 6.1 FastAPI Application
 
-FastAPI is used to build the backend API.
+FastAPI is used to provide the REST API.
 
 Implemented endpoints include:
 
-* `GET /` — returns an application message.
-* `POST /jobs` — accepts a job request and returns job information.
-* `POST /upload-url` — accepts an upload request and generates a presigned upload URL through the S3 service.
+- `GET /` — returns the application message.
+- `POST /jobs` — creates a media-processing job.
+- `GET /jobs/{job_id}` — retrieves the current status of a job.
+- `POST /upload-url` — generates a presigned S3 upload URL.
+- `GET /metrics` — exposes Prometheus-compatible application metrics.
 
-Pydantic request models are used for structured request data and validation.
+Pydantic models are used to validate job and upload requests.
 
-### 5.2 Amazon S3 Integration
+---
 
-The S3 service supports generating presigned upload URLs.
+### 6.2 Job Creation and Status Tracking
 
-The upload URL endpoint uses the requested filename to construct an object name under the `uploads/` prefix.
+When a new job is created:
 
-Example object name:
+1. A unique job ID is generated.
+2. The initial status is stored in Redis as `pending`.
+3. The job is submitted to Celery.
+4. Celery sends the task through RabbitMQ.
+5. The worker changes the status to `processing`.
+6. The requested media operation is executed.
+7. The final status becomes `completed`.
+8. If an error occurs, the status becomes `failed`.
+
+Supported job-status values include:
+
+```text
+pending
+processing
+completed
+failed
+```
+
+---
+
+### 6.3 Celery Background Processing
+
+Celery is used to execute media-processing jobs asynchronously.
+
+The API does not perform the processing directly. Instead, it submits a task to Celery:
+
+```text
+FastAPI
+   |
+   v
+Celery
+   |
+   v
+RabbitMQ
+   |
+   v
+Celery Worker
+   |
+   v
+Media Processing
+```
+
+This allows the API to remain responsive while media-processing operations are performed by the worker.
+
+---
+
+### 6.4 RabbitMQ
+
+RabbitMQ is used as the message broker for Celery.
+
+It manages messages between the FastAPI application and the Celery worker.
+
+Docker Compose provides RabbitMQ with:
+
+```text
+AMQP: 5672
+Management UI: 15672
+```
+
+---
+
+### 6.5 Redis Job Status
+
+Redis is used to store job statuses.
+
+The application stores values using job-specific Redis keys:
+
+```text
+job:<job_id>
+```
+
+Redis is also used to store the latest worker CPU usage.
+
+---
+
+### 6.6 Amazon S3 Integration
+
+The S3 service generates presigned upload URLs.
+
+The upload endpoint creates an object name using the `uploads/` prefix.
+
+Example:
 
 ```text
 uploads/video.mp4
 ```
 
-This provides a way for clients to upload media to object storage without sending the file through the API server itself.
+This allows clients to upload media directly to object storage without transferring the media file through the FastAPI application.
 
-### 5.3 Redis Job Status
+---
 
-Redis is used to store and retrieve job statuses.
+### 6.7 Pillow Image Processing
 
-The project has tested status values such as:
+Pillow is used for image-processing operations.
 
-* `pending`
-* `processing`
-* `completed`
-* `failed`
+Implemented operations include:
 
-The Redis service has been tested locally using a Redis Docker container and the Python Redis client.
+- Image cropping
+- Image resizing
+- JPEG image compression
 
-### 5.4 Pillow Image Processing
+The image-processing service is organized separately from the API and background-task logic.
 
-Pillow is used for the image-processing service. The following operations have been implemented:
+---
 
-**Image cropping**
+### 6.8 FFmpeg Video Processing
 
-The `crop_image()` function accepts an image and crop coordinates and returns the selected region.
+FFmpeg is used for video-processing operations.
 
-**Image resizing**
+Implemented operations include:
 
-The `resize_image()` function accepts an image, target width, and target height. It uses Pillow's LANCZOS resampling filter.
+**Thumbnail extraction**
 
-**Image compression**
+Extracts a video frame at a specified timestamp and saves it as an image.
 
-The `compress_image()` function converts the image to RGB and encodes it as JPEG using a configurable quality value and optimization.
+**Video transcoding**
 
-The JPEG data is written to an in-memory `BytesIO` buffer, then reopened as a Pillow image.
+Converts video using H.264 video encoding and AAC audio encoding.
 
-## 6. Development Progress
+The worker executes these operations as background Celery tasks.
 
-### Week 1 and Week 2
+---
 
-The project has been developed incrementally, establishing its backend application, API structure, supporting services, and testing foundation.
+## 7. Prometheus Metrics
 
-The current repository includes FastAPI endpoints, S3 integration, Redis status functionality, and automated tests.
+A Prometheus-compatible `/metrics` endpoint has been implemented.
 
-### Week 3 — Core Media Processing Logic
+The application exposes:
 
-**Day 15 — Image Cropping**
+### Queue Length
 
-* Installed Pillow.
-* Created the image-processing service.
-* Implemented image cropping.
-* Added an automated crop test.
+```text
+queue_length
+```
 
-**Day 16 — Image Resizing**
+Tracks the number of jobs waiting in the Celery queue.
 
-* Implemented image resizing using Pillow.
-* Used the LANCZOS resampling filter.
-* Added an automated resize test.
+### Worker CPU Usage
 
-**Day 17 — Image Compression**
+```text
+worker_cpu_usage
+```
 
-* Implemented JPEG image compression.
-* Used `BytesIO` for in-memory image data.
-* Added an automated compression test.
-* Verified the full test suite.
+Tracks worker CPU usage percentage.
 
-## 7. Testing and Validation
+Example:
 
-Pytest is used to run the automated test suite.
+```text
+# HELP queue_length Number of jobs waiting in the queue
+# TYPE queue_length gauge
+queue_length 0.0
 
-The latest recorded test run collected 12 tests across the image-processing, API, Redis, and S3 test modules.
+# HELP worker_cpu_usage CPU usage percentage of the worker
+# TYPE worker_cpu_usage gauge
+worker_cpu_usage 1.2
+```
 
-**Latest result: 12 passed, 1 warning.**
+The metrics endpoint can be accessed at:
 
-| Test module             | Tests passed |
-| ----------------------- | -----------: |
-| `test_image_service.py` |            3 |
-| `test_main.py`          |            4 |
-| `test_redis_service.py` |            2 |
-| `test_s3_service.py`    |            3 |
-| **Total**               |       **12** |
+```text
+http://localhost:8000/metrics
+```
 
-The warning is a deprecation warning associated with the Starlette/AnyIO testing dependency.
+---
 
-## 8. Local Development Environment
+## 8. Docker Deployment
 
-The project is developed using:
+The complete application can be started using Docker Compose.
 
-* Windows
-* Visual Studio Code
-* Python virtual environment (`.venv`)
-* PowerShell
-* Docker for local supporting services
+### Build and start the services
 
-The required Python packages are listed in `requirements.txt`.
+```powershell
+docker compose up --build
+```
 
-## 9. Current Project Status
+This starts:
 
-**Completed and tested**
+- FastAPI API
+- Celery worker
+- RabbitMQ
+- Redis
 
-* FastAPI application and implemented API endpoints.
-* S3 presigned upload URL functionality.
-* Redis job-status service.
-* Pillow image cropping.
-* Pillow image resizing.
-* Pillow JPEG compression.
-* Automated tests for the implemented components.
+### Check running services
 
-**Planned / upcoming**
+```powershell
+docker compose ps
+```
 
-* FFmpeg-based media processing, including thumbnail generation and transcoding.
-* Integration of processing scripts with Celery workers.
-* End-to-end testing of the complete processing workflow.
-* Further validation and project submission documentation.
+All four services should show a running status.
 
-The complete distributed processing workflow is still under development.
+### Stop the services
 
-## 10. Repository
+```powershell
+docker compose down
+```
+
+---
+
+## 9. API Verification
+
+The root endpoint was verified after starting the Docker environment.
+
+Request:
+
+```text
+GET http://localhost:8000/
+```
+
+Response:
+
+```json
+{
+  "message": "Distributed Media Processing Microservice"
+}
+```
+
+The endpoint returned:
+
+```text
+HTTP 200 OK
+```
+
+confirming that the FastAPI service was running correctly inside Docker.
+
+---
+
+## 10. Testing and Validation
+
+Pytest is used for automated testing.
+
+The current test suite contains tests covering:
+
+- Image processing
+- FastAPI endpoints
+- Redis services
+- S3 services
+- Video processing
+
+The complete test suite was executed inside the Docker API container.
+
+Latest result:
+
+```text
+18 passed, 1 warning
+```
+
+The warning is related to a testing dependency deprecation and does not represent a test failure.
+
+---
+
+## 11. Load Testing
+
+A basic API load test was performed against the root endpoint.
+
+Command:
+
+```powershell
+1..50 | ForEach-Object {
+    Invoke-WebRequest -UseBasicParsing http://localhost:8000/
+}
+```
+
+### Result
+
+The API successfully processed the 50 requests.
+
+All observed responses returned:
+
+```text
+StatusCode : 200
+```
+
+with the expected application response:
+
+```json
+{
+  "message": "Distributed Media Processing Microservice"
+}
+```
+
+### Load Test Conclusion
+
+The basic API endpoint successfully handled 50 sequential requests without HTTP failures during the local Docker test.
+
+This was a basic functional load test rather than a production-scale performance benchmark.
+
+---
+
+## 12. Memory Usage Analysis
+
+Docker container memory usage was measured using:
+
+```powershell
+docker stats --no-stream
+```
+
+Measured baseline:
+
+| Service | Memory Usage |
+|---|---:|
+| Celery Worker | 44.89 MiB |
+| FastAPI API | 69.14 MiB |
+| RabbitMQ | 160.1 MiB |
+| Redis | 9.09 MiB |
+
+The containers were operating within the available Docker memory limit.
+
+### Memory Optimization Conclusion
+
+The baseline measurement did not indicate an immediate memory-consumption problem.
+
+Therefore, no unnecessary code-level memory optimization was introduced.
+
+The measured memory values are recorded as the baseline for future performance monitoring and optimization.
+
+---
+
+## 13. Local Development Environment
+
+The project was developed and tested using:
+
+- Windows 11
+- Visual Studio Code
+- Python virtual environment
+- PowerShell
+- Docker
+- Docker Compose
+- Git
+- GitHub
+
+Supporting services are run through Docker Compose.
+
+---
+
+## 14. Current Project Status
+
+### Completed
+
+- FastAPI REST API
+- Pydantic request models
+- Amazon S3 presigned upload URL generation
+- Redis job-status storage
+- Celery background processing
+- RabbitMQ message broker
+- Pillow image processing
+- FFmpeg video processing
+- Docker Compose environment
+- Prometheus-compatible metrics endpoint
+- Queue-length monitoring
+- Worker CPU monitoring
+- Automated test suite
+- Docker-based test verification
+- Basic API load testing
+- Memory usage measurement
+- Deployment documentation
+
+### Current Validation
+
+```text
+Docker services: Running
+API verification: Passed
+Load test: 50/50 successful HTTP responses
+Automated tests: 18 passed
+Metrics endpoint: Verified
+Memory baseline: Measured
+```
+
+---
+
+## 15. Repository
 
 **GitHub:**
+
 https://github.com/Nasrin-Code/Distributed_Media_Processing_Microservice
 
-The repository contains the project's source code, tests, configuration, dependency list, and documentation.
+The repository contains the application source code, automated tests, Docker configuration, dependency configuration, and project documentation.
 
-## 11. Conclusion
+---
 
-The project has established a backend foundation for a distributed media-processing system. It includes API endpoints, storage integration, Redis-based job-status handling, and tested image-processing functions using Pillow.
+## 16. Conclusion
 
-The next development phase will focus on FFmpeg processing and background worker integration, progressing toward an end-to-end media-processing workflow.
+The Distributed Media Processing Microservice has progressed from a basic FastAPI backend into a distributed, containerized media-processing system.
+
+The current implementation combines:
+
+- FastAPI for API services
+- Celery for asynchronous processing
+- RabbitMQ for task messaging
+- Redis for job-status storage
+- Pillow for image processing
+- FFmpeg for video processing
+- Amazon S3 for media upload integration
+- Prometheus-compatible metrics for monitoring
+- Docker Compose for multi-service deployment
+
+The application has been validated through automated testing, API verification, basic load testing, metrics verification, and memory-usage analysis.
