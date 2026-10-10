@@ -8,3 +8,4 @@ celery
 pillow
 prometheus-client
 psutil
+python-multipart

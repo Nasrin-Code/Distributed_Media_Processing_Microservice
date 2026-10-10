@@ -18,7 +18,10 @@ def process_job(self, job_id: str, filename: str, operation: str):
 
         set_job_status(job_id, "processing")
 
-        input_path = Path("sample_videos") / filename
+        uploaded_path = Path("uploads") / filename
+        sample_path = Path("sample_videos") / filename
+        
+        input_path = uploaded_path if uploaded_path.exists() else sample_path 
 
         if operation == "transcode":
             output_path = Path("converted") / f"{Path(filename).stem}_converted.mp4"

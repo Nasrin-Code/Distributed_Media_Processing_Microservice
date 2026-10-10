@@ -3,7 +3,11 @@ services:
     build: .
     ports:
       - "8000:8000"
-   
+    volumes:
+      - ./uploads:/app/uploads
+      - ./converted:/app/converted
+      - ./thumbnails:/app/thumbnails
+
   rabbitmq:
     image: rabbitmq:3.13-management
     ports:
@@ -18,3 +22,8 @@ services:
   worker:
     build: .
     command: celery -A app.celery_app worker --loglevel=info --pool=solo
+    volumes:
+      - ./uploads:/app/uploads
+      - ./converted:/app/converted
+      - ./thumbnails:/app/thumbnails
+      
